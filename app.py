@@ -73,9 +73,8 @@ def process_file(file_path):
         # Proses VirusTotal
         virustotal_result = scan_with_virustotal(file_path)
         if virustotal_result:
-            virustotal_output = json.dumps(virustotal_result, indent=4)
-            virustotal_result_text.delete(1.0, tk.END)
-            virustotal_result_text.insert(tk.END, virustotal_output)
+            # Menampilkan hasil VirusTotal dalam tabel
+            display_virustotal_in_table(virustotal_result)
 
         # Proses CAPA
         capa_output = analyze_with_capa(file_path)
@@ -85,6 +84,28 @@ def process_file(file_path):
     finally:
         # Hentikan loading
         stop_loading()
+
+# Fungsi untuk menampilkan hasil VirusTotal dalam tabel
+def display_virustotal_in_table(virustotal_result):
+    try:
+        # Mengambil data dari hasil analisis VirusTotal
+        scan_results = virustotal_result["data"]["attributes"]["results"]
+
+        # Menghapus data lama di tabel
+        for row in virustotal_table.get_children():
+            virustotal_table.delete(row)
+
+        # Menambahkan baris ke tabel
+        for scanner, result in scan_results.items():
+            # Menyusun hasil untuk setiap scanner
+            engine_name = result.get("engine_name", "N/A")
+            category = result.get("category", "N/A")
+            scan_result = result.get("result", "N/A")
+
+            virustotal_table.insert("", "end", values=(engine_name, category, scan_result))
+
+    except Exception as e:
+        messagebox.showerror("Error", f"Error saat menampilkan tabel: {e}")
 
 # Fungsi untuk upload file dan memulai proses di thread
 def upload_file():
@@ -121,7 +142,7 @@ root.columnconfigure(1, weight=1)
 image_path = "team.jpg"
 try:
     image = Image.open(image_path)
-    resized_image = image.resize((200, 600))
+    resized_image = image.resize((200, 640))
     photo = ImageTk.PhotoImage(resized_image)
 
     image_label = tk.Label(root, image=photo)
@@ -147,8 +168,12 @@ progress_bar = ttk.Progressbar(frame_right, mode="indeterminate")
 virustotal_label = tk.Label(frame_right, text="Hasil VirusTotal:")
 virustotal_label.pack()
 
-virustotal_result_text = tk.Text(frame_right, height=15, width=85)
-virustotal_result_text.pack()
+# Membuat tabel untuk menampilkan hasil VirusTotal
+virustotal_table = ttk.Treeview(frame_right, columns=("Engine Name", "Category", "Result"), show="headings")
+virustotal_table.heading("Engine Name", text="Engine Name")
+virustotal_table.heading("Category", text="Category")
+virustotal_table.heading("Result", text="Result")
+virustotal_table.pack()
 
 # Menambahkan area untuk menampilkan hasil CAPA
 capa_label = tk.Label(frame_right, text="Hasil CAPA (Teknik Serangan):")
