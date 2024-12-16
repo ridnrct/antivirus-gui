@@ -45,3 +45,10 @@ sortedcontainers==2.4.0
 viv-utils==0.7.11
 vivisect==1.2.1
 msgspec==0.18.6
+certifi==2024.12.14 
+charset-normalizer==3.4.0 
+idna==3.10 
+requests==2.32.3 
+urllib3==2.2.3
+flare-capa==8.0.1 
+python-flirt==0.8.10

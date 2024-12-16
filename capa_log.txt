@@ -1,0 +1,31 @@
+STDOUT:
+
+STDERR:
+WARNING  capa.capabilities.common:                                 common.py:50
+         ---------------------------------------------------------             
+         -----------------------                                               
+WARNING  capa.capabilities.common:  This sample appears to be an   common.py:52
+         installer.                                                            
+WARNING  capa.capabilities.common:                                 common.py:52
+WARNING  capa.capabilities.common:  capa cannot handle installers  common.py:52
+         well. This means the results may be misleading or                     
+         incomplete.                                                           
+WARNING  capa.capabilities.common:  You should try to understand   common.py:52
+         the install mechanism and analyze created files with                  
+         capa.                                                                 
+WARNING  capa.capabilities.common:                                 common.py:52
+WARNING  capa.capabilities.common:  Identified via rule:           common.py:53
+         (internal) installer file limitation                                  
+WARNING  capa.capabilities.common:                                 common.py:55
+WARNING  capa.capabilities.common:  Use -v or -vv if you really    common.py:56
+         want to see the capabilities identified by capa.                      
+WARNING  capa.capabilities.common:                                 common.py:57
+         ---------------------------------------------------------             
+         -----------------------                                               
+ERROR    capa: Using default signature path, but it doesn't exist.  main.py:799
+         Please install the signatures first:                                  
+         https://github.com/mandiant/capa/blob/master/doc/installat            
+         ion.md#method-2-using-capa-as-a-python-library.                       
+Unexpected exception raised: <class 'OSError'>. Please run capa in debug mode (-d/--debug) to see the stack trace.
+Please also report your issue on the capa GitHub page so we can improve the code! (https://github.com/mandiant/capa/issues)
+

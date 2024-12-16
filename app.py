@@ -1,11 +1,11 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog, messagebox, ttk
+from PIL import Image, ImageTk  
 import requests
 import json
 import os
 import subprocess
 
-# Fungsi untuk mengupload file ke VirusTotal dan mendapatkan hasilnya
 # Fungsi untuk mengupload file ke VirusTotal dan mendapatkan hasilnya
 def scan_with_virustotal(file_path):
     api_key = "93990b132eccaaa0480b85365d57f782d49dbc1f6901ed90cd356c04c8d9a845"  # Ganti dengan API key Anda
@@ -15,24 +15,22 @@ def scan_with_virustotal(file_path):
         "x-apikey": api_key
     }
 
-    # Normalisasi jalur file
-    file_path = os.path.normpath(file_path)
+    file_path = os.path.normpath(file_path)  # Normalisasi jalur file
 
-    # Baca file
     try:
         with open(file_path, "rb") as file:
             response = requests.post(url, headers=headers, files={"file": file})
 
         if response.status_code == 200:
             data = response.json()
-            analysis_url = data["data"]["links"]["self"]  # Ambil URL analisis lengkap
+            analysis_url = data["data"]["links"]["self"]
 
             # Mendapatkan hasil analisis dengan permintaan GET
             analysis_response = requests.get(analysis_url, headers=headers)
 
             if analysis_response.status_code == 200:
                 analysis_data = analysis_response.json()
-                return analysis_data  # Mengembalikan hasil analisis lengkap
+                return analysis_data
             else:
                 messagebox.showerror("Error", "Gagal mendapatkan hasil analisis dari VirusTotal.")
                 return None
@@ -46,22 +44,19 @@ def scan_with_virustotal(file_path):
 
 # Fungsi untuk menganalisis file menggunakan CAPA
 def analyze_with_capa(file_path):
-    # Tentukan path ke Python di .venv
     python_path = os.path.join(os.getcwd(), ".venv", "Scripts", "python.exe")
 
-    # Periksa apakah path Python ada
     if not os.path.exists(python_path):
         return "Python di .venv tidak ditemukan. Pastikan .venv telah diaktifkan."
 
     try:
         result = subprocess.run(
-            [python_path, "./capa/capa/main.py", file_path, "-r", "./capa/capa/rules/"],
+            [python_path, "./capa/main.py", file_path, "-r", "./capa/rules/", "-vv"],
             capture_output=True,
-            text=True,  # Pastikan text=True, agar output adalah string
-            encoding='utf-8'  # Tentukan encoding yang benar
+            text=True,
+            encoding="utf-8"
         )
 
-        # Logging hasil ke file
         with open("capa_log.txt", "w", encoding="utf-8") as log_file:
             log_file.write(f"STDOUT:\n{result.stdout}\n")
             log_file.write(f"STDERR:\n{result.stderr}\n")
@@ -75,49 +70,90 @@ def analyze_with_capa(file_path):
             error_file.write(str(e))
         return "CAPA gagal dijalankan."
 
+
 # Fungsi untuk menangani file upload dan scan
 def upload_file():
     file_path = filedialog.askopenfilename()
     if file_path:
         messagebox.showinfo("Info", f"File terpilih: {file_path}")
 
-        # Proses VirusTotal
-        virustotal_result = scan_with_virustotal(file_path)
-        if virustotal_result:
-            virustotal_output = json.dumps(virustotal_result, indent=4)
-            virustotal_result_text.delete(1.0, tk.END)
-            virustotal_result_text.insert(tk.END, virustotal_output)
+        # Tampilkan loading dan nonaktifkan tombol
+        loading_label.pack()
+        progress_bar.start(10)
+        upload_button.config(state="disabled")
+        root.update()
 
-        # Proses CAPA
-        capa_output = analyze_with_capa(file_path)
+        try:
+            # Proses VirusTotal
+            virustotal_result = scan_with_virustotal(file_path)
+            if virustotal_result:
+                virustotal_output = json.dumps(virustotal_result, indent=4)
+                virustotal_result_text.delete(1.0, tk.END)
+                virustotal_result_text.insert(tk.END, virustotal_output)
 
-        # Cek apakah capa_output adalah string yang valid sebelum memasukkannya ke Text widget
-        if isinstance(capa_output, str):
-            capa_result_text.delete(1.0, tk.END)
-            capa_result_text.insert(tk.END, capa_output)
-        else:
-            messagebox.showerror("Error", "Output CAPA tidak valid.")
+            # Proses CAPA
+            capa_output = analyze_with_capa(file_path)
+
+            if isinstance(capa_output, str):
+                capa_result_text.delete(1.0, tk.END)
+                capa_result_text.insert(tk.END, capa_output)
+            else:
+                messagebox.showerror("Error", "Output CAPA tidak valid.")
+        finally:
+            # Hentikan loading dan aktifkan tombol kembali
+            loading_label.pack_forget()
+            progress_bar.stop()
+            upload_button.config(state="normal")
+            root.update()
 
 # Membuat antarmuka pengguna (GUI)
 root = tk.Tk()
-root.title("Antivirus GUI dengan VirusTotal dan CAPA")
+root.title("Sapapan Antivirus")
 
-# Menambahkan tombol untuk memilih file
-upload_button = tk.Button(root, text="Upload File untuk Scan", command=upload_file)
+# Atur grid layout
+root.rowconfigure(0, weight=1)
+root.columnconfigure(1, weight=1)
+
+# Menambahkan gambar di sisi kiri
+image_path = "team.jpg"  # Ganti dengan path gambar Anda
+try:
+    # Buka dan sesuaikan ukuran gambar
+    image = Image.open(image_path)
+    resized_image = image.resize((200, 600))  # Ubah ukuran sesuai kebutuhan
+    photo = ImageTk.PhotoImage(resized_image)
+
+    # Tambahkan gambar ke Label
+    image_label = tk.Label(root, image=photo)
+    image_label.image = photo  # Simpan referensi ke objek gambar
+    image_label.grid(row=0, column=0, sticky="ns")  # Gambar memenuhi tinggi (sticky north-south)
+except Exception as e:
+    image_label = tk.Label(root, text="Gambar tidak ditemukan!", fg="red")
+    image_label.grid(row=0, column=0, sticky="ns")
+
+# Frame kanan untuk elemen lainnya
+frame_right = tk.Frame(root)
+frame_right.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
+
+# Tambahkan tombol untuk memilih file
+upload_button = tk.Button(frame_right, text="Upload File untuk Scan", command=upload_file)
 upload_button.pack(pady=20)
 
+# Menambahkan indikator loading
+loading_label = tk.Label(frame_right, text="Sedang memproses, harap tunggu...", fg="red")
+progress_bar = ttk.Progressbar(frame_right, mode="indeterminate")
+
 # Menambahkan area untuk menampilkan hasil VirusTotal
-virustotal_label = tk.Label(root, text="Hasil VirusTotal:")
+virustotal_label = tk.Label(frame_right, text="Hasil VirusTotal:")
 virustotal_label.pack()
 
-virustotal_result_text = tk.Text(root, height=15, width=100)
+virustotal_result_text = tk.Text(frame_right, height=15, width=70)
 virustotal_result_text.pack()
 
 # Menambahkan area untuk menampilkan hasil CAPA
-capa_label = tk.Label(root, text="Hasil CAPA (Teknik Serangan):")
+capa_label = tk.Label(frame_right, text="Hasil CAPA (Teknik Serangan):")
 capa_label.pack()
 
-capa_result_text = tk.Text(root, height=15, width=100)
+capa_result_text = tk.Text(frame_right, height=15, width=70)
 capa_result_text.pack()
 
 # Menjalankan GUI
