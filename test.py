@@ -146,16 +146,27 @@ def scan_file_with_virustotal(file_path, output_text):
         attributes = data.get('attributes', {})
         malicious = attributes.get('last_analysis_stats', {}).get('malicious', 0)
         
+        # Tambahkan hasil path file
         result_text = f"{file_path}: "
-        if malicious > 0:
-            result_text += "ALERT! Terdeteksi malware.\n"
-        else:
-            result_text += "Aman.\n"
         output_text.insert(tk.END, result_text)
-        output_text.yview(tk.END)  # Scroll ke bawah setelah menambahkan hasil
+
+        # Tambahkan status hasil
+        if malicious > 0:
+            alert_text = "ALERT! Terdeteksi malware.\n"
+            output_text.insert(tk.END, alert_text, "alert")  # Tambahkan teks dengan tag "alert"
+        else:
+            safe_text = "Aman.\n"
+            output_text.insert(tk.END, safe_text)
+
+        # Atur scrolling
+        output_text.yview(tk.END)
     else:
         output_text.insert(tk.END, f"Gagal memindai {file_path}, status: {response.status_code}\n")
         output_text.yview(tk.END)
+
+    # Konfigurasi tag untuk warna merah
+    output_text.tag_config("alert", foreground="red")
+
 
 # Fungsi untuk memindai semua file dalam sebuah direktori
 def scan_directory(directory_path, output_text):
@@ -179,8 +190,8 @@ def browse_directory(output_text):
 
 # Fungsi untuk menampilkan loading
 def start_loading():
-    loading_label.grid(row=4, column=1)
-    progress_bar.grid(row=5, column=1)
+    # loading_label.grid(row=4, column=1)
+    progress_bar.grid(row=4, column=1)
     progress_bar.start()
     upload_button.config(state="disabled")
     browse_button.config(state="disabled")
@@ -190,7 +201,7 @@ def start_loading():
 def stop_loading():
     progress_bar.stop()
     progress_bar.grid_forget()
-    loading_label.grid_forget()
+    # loading_label.grid_forget()
     upload_button.config(state="normal")
     browse_button.config(state="normal")
     root.update()
@@ -228,7 +239,7 @@ virustotal_label.grid(pady=10, row=1, column=0)
 virustotal_label = ttk.Label(frame_right, text="Hasil Scan Direktori VirusTotal:")
 virustotal_label.grid(pady=10, row=1, column=1)
 
-loading_label = ttk.Label(frame_right, text="Sedang memproses, harap tunggu...", bootstyle="danger")
+# loading_label = ttk.Label(frame_right, text="Sedang memproses, harap tunggu...", bootstyle="danger")
 progress_bar = ttk.Progressbar(frame_right, mode="indeterminate", bootstyle=INFO)
 
 virustotal_table = ttk.Treeview(frame_right, height=10, columns=("Engine Name", "Category", "Result"), show="headings")
