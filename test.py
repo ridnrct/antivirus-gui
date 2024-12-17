@@ -251,8 +251,8 @@ virustotal_table.grid(row=2)
 capa_label = ttk.Label(frame_right, text="Hasil Scan CAPA (Teknik Serangan):")
 capa_label.grid(pady=10, row=4)
 
-capa_result_text = ttk.Text(frame_right, height=15, width=79)
-capa_result_text.grid(row=5)
+capa_result_text = tk.Text(frame_right, height=15, width=100)
+capa_result_text.grid(row=5, columnspan=2, sticky="w")
 
 output_text = ttk.Text(frame_right, width=75, height=11)
 output_text.grid(row=2, column=1, padx=10, pady=10)
