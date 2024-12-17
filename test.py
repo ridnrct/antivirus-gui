@@ -199,7 +199,7 @@ root.title("Sapapan Antivirus")
 root.rowconfigure(0, weight=1)
 root.columnconfigure(1, weight=1)
 
-image_path = "sapapan.png"
+image_path = "team.jpg"
 try:
     image = Image.open(image_path)
     resized_image = image.resize((200, 680))
