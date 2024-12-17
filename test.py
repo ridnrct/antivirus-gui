@@ -1,5 +1,7 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk, scrolledtext
+import ttkbootstrap as ttk
+from ttkbootstrap.constants import *
+from tkinter import filedialog, messagebox, scrolledtext
 from PIL import Image, ImageTk
 import requests
 import json
@@ -177,8 +179,8 @@ def browse_directory(output_text):
 
 # Fungsi untuk menampilkan loading
 def start_loading():
-    loading_label.grid()
-    progress_bar.grid()
+    loading_label.grid(row=4, column=1)
+    progress_bar.grid(row=5, column=1)
     progress_bar.start()
     upload_button.config(state="disabled")
     browse_button.config(state="disabled")
@@ -193,41 +195,41 @@ def stop_loading():
     browse_button.config(state="normal")
     root.update()
 
-root = tk.Tk()
+root = ttk.Window(themename="darkly")
 root.title("Sapapan Antivirus")
 
 root.rowconfigure(0, weight=1)
 root.columnconfigure(1, weight=1)
 
-image_path = "team.jpg"
+image_path = "sapapan.png"
 try:
     image = Image.open(image_path)
-    resized_image = image.resize((200, 680))
+    resized_image = image.resize((200, 720))
     photo = ImageTk.PhotoImage(resized_image)
 
     image_label = tk.Label(root, image=photo)
     image_label.image = photo
     image_label.grid(row=0, column=0, sticky="ns")
 except Exception as e:
-    image_label = tk.Label(root, text="Gambar tidak ditemukan!", fg="red")
+    image_label = tk.Label(root, text="Gambar tidak ditemukan!", fg="red", bootstyle="danger")
     image_label.grid(row=0, column=0, sticky="ns")
 
-frame_right = tk.Frame(root)
+frame_right = ttk.Frame(root)
 frame_right.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
 
-upload_button = tk.Button(frame_right, text="Upload File untuk Scan", command=upload_file)
+upload_button = ttk.Button(frame_right, text="Upload File untuk Scan", command=upload_file, bootstyle=INFO)
 upload_button.grid(pady=10, row=0)
 
-browse_button = tk.Button(frame_right, text="Pilih Direktori", command=lambda: browse_directory(output_text))
+browse_button = ttk.Button(frame_right, text="Pilih Direktori", command=lambda: browse_directory(output_text),bootstyle=INFO)
 browse_button.grid(row=0, column=1, pady=10)
 
-virustotal_label = tk.Label(frame_right, text="Hasil Scan File VirusTotal:")
+virustotal_label = ttk.Label(frame_right, text="Hasil Scan File VirusTotal:")
 virustotal_label.grid(pady=10, row=1, column=0)
-virustotal_label = tk.Label(frame_right, text="Hasil Scan Direktori VirusTotal:")
+virustotal_label = ttk.Label(frame_right, text="Hasil Scan Direktori VirusTotal:")
 virustotal_label.grid(pady=10, row=1, column=1)
 
-loading_label = tk.Label(frame_right, text="Sedang memproses, harap tunggu...", fg="red")
-progress_bar = ttk.Progressbar(frame_right, mode="indeterminate")
+loading_label = ttk.Label(frame_right, text="Sedang memproses, harap tunggu...", bootstyle="danger")
+progress_bar = ttk.Progressbar(frame_right, mode="indeterminate", bootstyle=INFO)
 
 virustotal_table = ttk.Treeview(frame_right, height=10, columns=("Engine Name", "Category", "Result"), show="headings")
 virustotal_table.heading("Engine Name", text="Engine Name")
@@ -235,13 +237,13 @@ virustotal_table.heading("Category", text="Category")
 virustotal_table.heading("Result", text="Result")
 virustotal_table.grid(row=2)
 
-capa_label = tk.Label(frame_right, text="Hasil Scan CAPA (Teknik Serangan):")
-capa_label.grid(pady=10)
+capa_label = ttk.Label(frame_right, text="Hasil Scan CAPA (Teknik Serangan):")
+capa_label.grid(pady=10, row=4)
 
-capa_result_text = tk.Text(frame_right, height=15, width=79)
-capa_result_text.grid()
+capa_result_text = ttk.Text(frame_right, height=15, width=79)
+capa_result_text.grid(row=5)
 
-output_text = scrolledtext.ScrolledText(frame_right, width=75, height=14)
+output_text = ttk.Text(frame_right, width=75, height=11)
 output_text.grid(row=2, column=1, padx=10, pady=10)
 
 root.mainloop()
