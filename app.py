@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk, scrolledtext
+from tkinter import filedialog, messagebox, scrolledtext, ttk
 from PIL import Image, ImageTk
 import requests
 import json
@@ -128,8 +128,27 @@ def get_file_hash(file_path, hash_algo='sha256'):
             hash_function.update(chunk)
     return hash_function.hexdigest()
 
+# Variabel untuk menyimpan file malware
+malware_files = []
+
+def delete_malware_files(output_text):
+    global malware_files
+    if malware_files:
+        for file in malware_files:
+            try:
+                os.remove(file)
+                output_text.insert(tk.END, f"File {file} berhasil dihapus.\n")
+            except Exception as e:
+                output_text.insert(tk.END, f"Gagal menghapus file {file}: {e}\n")
+        malware_files = []  # Kosongkan daftar setelah penghapusan
+        delete_button.config(state="disabled")  # Nonaktifkan tombol
+    else:
+        output_text.insert(tk.END, "Tidak ada file malware untuk dihapus.\n")
+    output_text.yview(tk.END)
+
 # Fungsi untuk memeriksa status file melalui API VirusTotal
 def scan_file_with_virustotal(file_path, output_text):
+    global malware_files
     file_hash = get_file_hash(file_path)
     headers = {
         "x-apikey": API_KEY
@@ -144,16 +163,32 @@ def scan_file_with_virustotal(file_path, output_text):
         attributes = data.get('attributes', {})
         malicious = attributes.get('last_analysis_stats', {}).get('malicious', 0)
         
+        # Tambahkan hasil path file
         result_text = f"{file_path}: "
-        if malicious > 0:
-            result_text += "ALERT! Terdeteksi malware.\n"
-        else:
-            result_text += "Aman.\n"
         output_text.insert(tk.END, result_text)
-        output_text.yview(tk.END)  # Scroll ke bawah setelah menambahkan hasil
+
+        # Tambahkan status hasil
+        if malicious > 0:
+            alert_text = "ALERT! Terdeteksi malware.\n"
+            output_text.insert(tk.END, alert_text, "alert")  # Tambahkan teks dengan tag "alert"
+            malware_files.append(file_path)  # Tambahkan file ke daftar malware
+        else:
+            safe_text = "Aman.\n"
+            output_text.insert(tk.END, safe_text)
+
+        # Aktifkan tombol delete jika ada malware
+        if malware_files:
+            delete_button.config(state="normal")
+        
+        # Atur scrolling
+        output_text.yview(tk.END)
     else:
         output_text.insert(tk.END, f"Gagal memindai {file_path}, status: {response.status_code}\n")
         output_text.yview(tk.END)
+
+    # Konfigurasi tag untuk warna merah
+    output_text.tag_config("alert", foreground="red")
+
 
 # Fungsi untuk memindai semua file dalam sebuah direktori
 def scan_directory(directory_path, output_text):
@@ -177,8 +212,8 @@ def browse_directory(output_text):
 
 # Fungsi untuk menampilkan loading
 def start_loading():
-    loading_label.grid()
-    progress_bar.grid()
+    # loading_label.grid(row=4, column=1)
+    progress_bar.grid(row=6, columnspan=2, pady=10)
     progress_bar.start()
     upload_button.config(state="disabled")
     browse_button.config(state="disabled")
@@ -188,60 +223,111 @@ def start_loading():
 def stop_loading():
     progress_bar.stop()
     progress_bar.grid_forget()
-    loading_label.grid_forget()
+    # loading_label.grid_forget()
     upload_button.config(state="normal")
     browse_button.config(state="normal")
     root.update()
 
+# Palet Warna untuk Tema Gelap
+DARK_BG = "#2E2E2E"  # Warna latar belakang utama
+DARK_FG = "#FFFFFF"  # Warna teks terang
+BTN_BG = "#3E3E3E"   # Warna tombol
+BTN_FG = "#FFFFFF"   # Warna teks tombol
+HIGHLIGHT_BG = "#5A5A5A"  # Warna aktif tombol
+ENTRY_BG = "#3A3A3A"  # Warna latar belakang teks masukan
+ENTRY_FG = "#FFFFFF"  # Warna teks masukan
+
+# Root Window
 root = tk.Tk()
 root.title("Sapapan Antivirus")
+root.configure(bg=DARK_BG)
 
 root.rowconfigure(0, weight=1)
 root.columnconfigure(1, weight=1)
 
+# Menampilkan Gambar
 image_path = "sapapan.png"
 try:
     image = Image.open(image_path)
     resized_image = image.resize((200, 680))
     photo = ImageTk.PhotoImage(resized_image)
 
-    image_label = tk.Label(root, image=photo)
+    image_label = tk.Label(root, image=photo, bg=DARK_BG)
     image_label.image = photo
     image_label.grid(row=0, column=0, sticky="ns")
 except Exception as e:
-    image_label = tk.Label(root, text="Gambar tidak ditemukan!", fg="red")
+    image_label = tk.Label(root, text="Gambar tidak ditemukan!", fg="red", bg=DARK_BG)
     image_label.grid(row=0, column=0, sticky="ns")
 
-frame_right = tk.Frame(root)
+# Frame Kanan
+frame_right = tk.Frame(root, bg=DARK_BG)
 frame_right.grid(row=0, column=1, sticky="nsew", padx=10, pady=10)
 
-upload_button = tk.Button(frame_right, text="Upload File untuk Scan", command=upload_file)
+# Tombol Upload
+upload_button = tk.Button(frame_right, text="Upload File untuk Scan", command=upload_file,
+                          bg=BTN_BG, fg=BTN_FG, activebackground=HIGHLIGHT_BG, activeforeground=DARK_FG, font=("Arial", 10, "bold"))
 upload_button.grid(pady=10, row=0)
 
-browse_button = tk.Button(frame_right, text="Pilih Direktori", command=lambda: browse_directory(output_text))
+# Tombol Browse
+browse_button = tk.Button(frame_right, text="Pilih Direktori", command=lambda: browse_directory(output_text),
+                          bg=BTN_BG, fg=BTN_FG, activebackground=HIGHLIGHT_BG, activeforeground=DARK_FG, font=("Arial", 10, "bold"))
 browse_button.grid(row=0, column=1, pady=10)
 
-virustotal_label = tk.Label(frame_right, text="Hasil Scan File VirusTotal:")
+# Label Hasil Scan VirusTotal
+virustotal_label = tk.Label(frame_right, text="Hasil Scan File VirusTotal:", fg=DARK_FG, bg=DARK_BG, font=("Arial", 10, "bold"))
 virustotal_label.grid(pady=10, row=1, column=0)
-virustotal_label = tk.Label(frame_right, text="Hasil Scan Direktori VirusTotal:")
-virustotal_label.grid(pady=10, row=1, column=1)
 
-loading_label = tk.Label(frame_right, text="Sedang memproses, harap tunggu...", fg="red")
+virustotal_dir_label = tk.Label(frame_right, text="Hasil Scan Direktori VirusTotal:", fg=DARK_FG, bg=DARK_BG, font=("Arial", 10, "bold"))
+virustotal_dir_label.grid(pady=10, row=1, column=1)
+
+# Progress Bar
 progress_bar = ttk.Progressbar(frame_right, mode="indeterminate")
+progress_bar.style = ttk.Style()
+progress_bar.style.theme_use("clam")  # Gunakan tema sederhana yang mendukung kostumisasi
 
-virustotal_table = ttk.Treeview(frame_right, height=10, columns=("Engine Name", "Category", "Result"), show="headings")
-virustotal_table.heading("Engine Name", text="Engine Name")
-virustotal_table.heading("Category", text="Category")
-virustotal_table.heading("Result", text="Result")
+# Tabel Hasil VirusTotal
+# Konfigurasi Style untuk Treeview (Tabel)
+style = ttk.Style()
+style.theme_use("clam")  # Gunakan tema sederhana yang mendukung kustomisasi
+style.configure("Dark.Treeview",
+                background=DARK_BG,  # Latar belakang tabel
+                foreground=DARK_FG,  # Warna teks
+                fieldbackground=DARK_BG,  # Latar belakang bidang
+                highlightthickness=0,  # Hilangkan border highlight
+                font=("Arial", 10))  # Font tabel
+style.configure("Dark.Treeview.Heading",
+                background=BTN_BG,  # Latar belakang header
+                foreground=BTN_FG,  # Warna teks header
+                font=("Arial", 10))  # Font header
+style.map("Dark.Treeview",
+          background=[("selected", HIGHLIGHT_BG)],  # Warna baris yang dipilih
+          foreground=[("selected", DARK_FG)])  # Warna teks baris yang dipilih
+
+# Tabel Hasil VirusTotal
+# columns = ("Engine Name", "Category", "Result")
+virustotal_table = ttk.Treeview(frame_right, height=10, columns=("Engine Name", "Category", "Result"), show="headings", style="Dark.Treeview")
+virustotal_table.heading("Engine Name", text="Engine Name", anchor="center")
+virustotal_table.heading("Category", text="Category", anchor="center")
+virustotal_table.heading("Result", text="Result", anchor="center")
+virustotal_table.column("Engine Name", anchor="center", width=100)
+virustotal_table.column("Category", anchor="center", width=100)
+virustotal_table.column("Result", anchor="center", width=200)
 virustotal_table.grid(row=2)
 
-capa_label = tk.Label(frame_right, text="Hasil Scan CAPA (Teknik Serangan):")
-capa_label.grid(pady=10)
+# Label Hasil CAPA
+capa_label = tk.Label(frame_right, text="Hasil Scan CAPA (Teknik Serangan):", fg=DARK_FG, bg=DARK_BG, font=("Arial", 10, "bold"))
+capa_label.grid(pady=10, row=3)
 
-capa_result_text = tk.Text(frame_right, height=15, width=79)
-capa_result_text.grid()
+# Teks Hasil CAPA
+capa_result_text = tk.Text(frame_right, height=15, width=102, bg=ENTRY_BG, fg=ENTRY_FG, insertbackground=DARK_FG)
+capa_result_text.grid(row=5, columnspan=2, sticky="w")
 
-output_text = scrolledtext.ScrolledText(frame_right, width=75, height=14)
+# Teks Output
+output_text = tk.Text(frame_right, width=50, height=14, bg=ENTRY_BG, fg=ENTRY_FG, insertbackground=DARK_FG)
 output_text.grid(row=2, column=1, padx=10, pady=10)
+
+delete_button = tk.Button(frame_right, text="Delete Malware", bg=BTN_BG, fg=BTN_FG, command=lambda: delete_malware_files(output_text))
+delete_button.grid(row=3, column=1, pady=5)
+delete_button.config(state="disabled")  # Nonaktifkan secara defaul
 
 root.mainloop()
